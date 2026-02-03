@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import * as THREE from "three";
-import { OBJLoader } from "three-stdlib";
-import { STLExporter } from "three-stdlib";
+import { OBJLoader, STLExporter } from "three-stdlib";
+import type { Object3D, Mesh } from "three";
 
 export const runtime = "nodejs";
 
@@ -23,9 +22,9 @@ export async function GET(req: Request) {
     const object = loader.parse(objText);
 
     // Ensure geometry is in world space
-    object.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
+    object.traverse((child: Object3D) => {
+      if ((child as Mesh).isMesh) {
+        const mesh = child as Mesh;
         mesh.updateMatrixWorld(true);
       }
     });
