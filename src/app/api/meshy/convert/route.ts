@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { OBJLoader, STLExporter } from "three-stdlib";
-import type { Object3D, Mesh } from "three";
 
 export const runtime = "nodejs";
 
@@ -22,26 +21,26 @@ export async function GET(req: Request) {
     const object = loader.parse(objText);
 
     // Ensure geometry is in world space
-    object.traverse((child: Object3D) => {
-      if ((child as Mesh).isMesh) {
-        const mesh = child as Mesh;
-        mesh.updateMatrixWorld(true);
+    object.traverse((child: { isMesh?: boolean; updateMatrixWorld?: (force: boolean) => void }) => {
+      if (child.isMesh && child.updateMatrixWorld) {
+        child.updateMatrixWorld(true);
       }
     });
 
     const exporter = new STLExporter();
     const stlResult = exporter.parse(object, { binary: true });
-    const stlBuffer = stlResult instanceof DataView 
-      ? Buffer.from(stlResult.buffer) 
-      : Buffer.from(stlResult as unknown as ArrayBuffer);
+    const arrayBuffer = stlResult instanceof DataView 
+      ? stlResult.buffer 
+      : (stlResult as unknown as ArrayBuffer);
 
-    return new Response(stlBuffer, {
+    return new Response(arrayBuffer as ArrayBuffer, {
       headers: {
         "Content-Type": "application/sla",
         "Content-Disposition": "attachment; filename=mesh.stl",
       },
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Unknown error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
