@@ -31,9 +31,12 @@ export async function GET(req: Request) {
     });
 
     const exporter = new STLExporter();
-    const stlData = exporter.parse(object, { binary: true }) as ArrayBuffer;
+    const stlResult = exporter.parse(object, { binary: true });
+    const stlBuffer = stlResult instanceof DataView 
+      ? Buffer.from(stlResult.buffer) 
+      : Buffer.from(stlResult as unknown as ArrayBuffer);
 
-    return new Response(Buffer.from(stlData), {
+    return new Response(stlBuffer, {
       headers: {
         "Content-Type": "application/sla",
         "Content-Disposition": "attachment; filename=mesh.stl",
